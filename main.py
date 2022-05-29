@@ -119,6 +119,7 @@ class Video:
         self.sign = ''
         # network
         self.SERVER_PORT = 1234
+        # self.SERVER_IP = '192.168.1.109'
         self.SERVER_IP = '0.0.0.0'
         self.server = Request(state='server')
         self.server.setblocking(False)
@@ -260,7 +261,7 @@ class Video:
         while True:
             frame, data = self.get_frame(data, payload_size, r)
             if self.sign != '':
-                r.send(self.sign.encode())
+                r.send(self.imdata.encode())
                 self.sign = ''
             else:
                 r.send(''.encode())
@@ -301,10 +302,11 @@ class Video:
         self.mutex.release()
 
     def analyzesigns(self, frame, count, r):
-        sign = self.signsmodel.single_image(frame)
+        sign, x, y, w, h = self.signsmodel.single_image(frame)
         if sign is not None:
             print(sign)
             self.sign = sign
+            self.imdata = sign + '*' + str(x) + '*' + str(y) + '*' + str(w) + '*' + str(h) + '*'
             if (not r.data) or (r.data[-1][1] != sign):
                 r.data.append((count, sign))
 

@@ -132,7 +132,14 @@ class RoadSigns:
                 out = orig[topx - 5:botx + 5, topy - 5:boty + 5]
                 if out.any():
                     out_resize = cv2.resize(out, (64, 64), interpolation=cv2.INTER_CUBIC)
-                    pics.append(out_resize)
+                    pics.append([out_resize, c])
+                    # cv2.rectangle(imag, (x, y), (int(x + w), int(y + h)), (0, 255, 0), 2)
+                    # cv2.imshow('frame', imag)
+                    # if cv2.waitKey(25) & 0xFF == ord('q'):
+                    #    break
+                    # rnd = random.randint(1, 1000)
+                    # PIL_image.save('D://Documents//Linoy//project//imgs//' + str(rnd) + '.jpg')
+                    # cv2.imwrite('D://Documents//Linoy//project//imgs//' + str(rnd) + '.jpg', imag)
             return pics
 
     def classify(self, image):
@@ -160,16 +167,17 @@ class RoadSigns:
         :return: name of a sign that found / None if not found
         """
         signs = self.identify_red(imag)
-        for s in signs:
+        for s, c in signs:
             color_coverted = cv2.cvtColor(s, cv2.COLOR_BGR2RGB)
             PIL_image = Image.fromarray(color_coverted)
             sign = self.classify(PIL_image)
             # rnd = random.randint(1, 1000)
             # PIL_image.save('D://Documents//Linoy//project//imgs//' + str(rnd) + '.jpg')
             if sign is not None:
-                return sign
+                x, y, w, h = cv2.boundingRect(c)
+                return sign, x, y, w, h
             else:
-                return None
-        return None
+                return None, None, None, None, None
+        return None, None, None, None, None
 
 

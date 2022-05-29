@@ -11,6 +11,7 @@ import struct
 import threading
 from instabot import Bot
 import ctypes
+import numpy
 
 class MyVideoCapture:
     def __init__(self, video_source, socket):
@@ -42,11 +43,11 @@ class MyVideoCapture:
                     sign = self.s.recv(1024).decode()
                 except BlockingIOError:
                     sign = ''
-                return ret, cv2.cvtColor(frame, cv2.COLOR_BGR2RGB), sign
+                return ret, cv2.cvtColor(frame, cv2.COLOR_BGR2RGB), sign, frame
             else:
-                return ret, None, None
+                return ret, None, None, None
         else:
-            return False, None, None
+            return False, None, None, None
 
     # Release the video source when the object is destroyed
     def delete(self):
@@ -288,7 +289,7 @@ class GUI:
             self.s.send('video'.encode())
         for widget in self.screen.winfo_children():
             widget.destroy()
-        Label(self.screen, text=("\n\nWelcome " + self.username + '\n'), font=('normal', 28), bg=self.color).pack()
+        Label(self.screen, text=("\nWelcome " + self.username + '\n'), font=('normal', 28), bg=self.color).pack()
         self.uploadbtn = Button(text="upload video", width=15, height=1, bg='#567', fg='White', font=("normal", 18))
         self.uploadbtn.bind("<Button-1>", self.upload_action)
         self.uploadbtn.pack()
@@ -389,15 +390,21 @@ class GUI:
         instagram = Instagram(str(self.current))
 
     def update(self):
-        ret, frame, sign = self.vid.get_frame()
+        ret, frame, sign, orig = self.vid.get_frame()
         if ret:
-            self.photo = PIL.ImageTk.PhotoImage(image=PIL.Image.fromarray(frame))
-            self.canvas.create_image(self.vid.width/2.5, self.vid.height/4, anchor=CENTER, image=self.photo)
             if sign != '':
-                if len(sign) > 21:
-                    sign = sign.split(')')[0]
-                self.sign.set(sign)
+                #sign = sign.split(')')[0]
+                s, x, y, w, h = sign.split('*')[:5]
+                x = int(x)
+                y = int(y)
+                w = int(w)
+                h = int(h)
+                self.sign.set(s)
                 self.screen.update_idletasks()
+                # img = PIL.ImageTk.getimage(imgtk)
+                cv2.rectangle(frame, (x, y), (int(x + w), int(y + h)), (0, 255, 0), 2)
+            self.photo = PIL.ImageTk.PhotoImage(image=PIL.Image.fromarray(frame))
+            self.canvas.create_image(self.vid.width / 2.5, self.vid.height / 4, anchor=CENTER, image=self.photo)
         self.after = self.screen.after(self.sec, self.update)
 
 
